@@ -1,9 +1,23 @@
 import { StyleSheet, TextInput, Text, View, Pressable } from 'react-native';
 import { useState } from 'react';
+import restCountries from './utils/restCountries';
 
 export default function App() {
 
   const [pais, setPais] = useState('')
+
+  const BuscaRealizada = () => {
+      restCountries.get(`/name/${pais}`)
+      .then((result) => {
+        console.log(
+          result.data[0].name.common,
+          result.data[0].name.official,
+          result.data[0].translations.rus.common,
+          result.data[0].maps.openStreetMaps);
+    });
+  };
+  
+
 
   return (     
         <View style={styles.container}>
@@ -17,7 +31,9 @@ export default function App() {
                   value={pais}
                   />
                   <Pressable
-                    style={styles.button}>
+                    style={styles.button} 
+                    onPress={BuscaRealizada}
+                    >
                     <Text
                       style={styles.buttonTxt}>Buscar País
                     </Text>
@@ -48,7 +64,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   input: {
-    width: '71%',
+    width: '70%',
     borderColor: 'gray',
     backgroundColor: 'white',
     borderWidth: 1,
