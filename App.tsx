@@ -1,27 +1,27 @@
-import { StyleSheet, TextInput, Text, View, Pressable, Linking, Image } from 'react-native';
+import { StyleSheet, Text, View, Linking, Image } from 'react-native';
 import { useState } from 'react';
 import restCountries from './utils/restCountries';
+import BlocoBusca from './components/BlocoBusca';
 
 export default function App() {
 
   //Caputura o que o usuário digita no campo país
-  const [pais, setPais] = useState('');
+  const [pais, setPais] = useState<string>('');
   //Captura o que o usuário digita no campo capital
-  const [capital, setCapital] = useState('');
+  const [capital, setCapital] = useState<string>('');
 
   //Salva os dados necessários que foram extraidos da API
-  const [detalhes, setDetalhes] = useState({
+  const [detalhesPorPais, setDetalhesPorPais] = useState({
     nomeComum: null,
     nomeOficial: null,
     nomeRusso: null,
     imagemPais: null
   });
 
-  const [info, setInfo] = useState({
+  const [detalhesPorCapital, setDetalhesPorCapital] = useState({
     nomeComum: null,
     bandeira: null
   });
-
 
   //State para mostrar ou não as informações por busca por país
   const [exibirListaPorPais, setExibirListaPorPais] = useState(false);
@@ -32,13 +32,12 @@ export default function App() {
   const buscaPorPais = () => {
       restCountries.get(`/name/${pais}`)
       .then((result) => {
-          setDetalhes({
+          setDetalhesPorPais({
             nomeComum: result.data[0].name.common,
             nomeOficial: result.data[0].name.official,
             nomeRusso: result.data[0].translations.rus.common,
             imagemPais: result.data[0].maps.openStreetMaps
           });
-          console.log(JSON.stringify(result.data[0], null, 2));
           setExibirListaPorPais(true)
         })
         .catch((error) => {
@@ -50,11 +49,10 @@ export default function App() {
   const buscaPorCapital = () => {
       restCountries.get(`/capital/${capital}`)
       .then((result) => {
-          setInfo({
+          setDetalhesPorCapital({
             nomeComum: result.data[0].name.common,
             bandeira: result.data[0].flags.png,
           });
-          console.log(JSON.stringify(result.data[0], null, 2));
           setExibirListaPorCapital(true)
         })
         .catch((error) => {
@@ -62,65 +60,36 @@ export default function App() {
           setExibirListaPorCapital(false);
         });
       };
+
   
 
   return (     
         <View style={styles.container}>
 
           <View style={styles.topGrid}>
-            <View style={styles.firstGridTop}>
-              <Text 
-                style={styles.title}>
-                Digite um país para consultar suas informações completas
-              </Text>
-              <Text
-                style={styles.subtitle}>
-                  OBS: o nome do país deve ser em inglês
-              </Text>
-                <View style={styles.firstGridBotton}>  
-                  <TextInput
-                    style={styles.input}
-                    placeholder='Digite aqui..'
-                    onChangeText={setPais}
-                    value={pais}
-                    />
-                    <Pressable
-                      style={styles.button} 
-                      onPress={buscaPorPais}
-                      >
-                      <Text
-                        style={styles.buttonTxt}>Buscar
-                      </Text>
-                    </Pressable>
-                  </View>
-            </View>
 
-            <View style={styles.firstGridTop}>
-              <Text 
-                style={styles.title}>
-                Digite uma capital para consultar suas informações de seu País
-              </Text>
-              <Text
-                style={styles.subtitle}>
-                  OBS: o nome da capital deve ser em inglês
-              </Text>
-                <View style={styles.firstGridBotton}>  
-                  <TextInput
-                    style={styles.input}
-                    placeholder='Digite aqui..'
-                    onChangeText={setCapital}
-                    value={capital}
-                    />
-                    <Pressable
-                      style={styles.button} 
-                      onPress={buscaPorCapital}
-                      >
-                      <Text
-                        style={styles.buttonTxt}>Buscar
-                      </Text>
-                    </Pressable>
-                  </View>
-            </View>
+            <BlocoBusca
+              titulo="Digite um país para consultar suas informações completas"
+              obs="OBS: o nome do país deve ser em inglês"
+              valor={pais}
+              onChange={setPais}
+              Pesquisar={buscaPorPais}
+              Limpar={() => {
+                setPais('')
+                setExibirListaPorPais(false);
+              }}/>
+
+            <BlocoBusca
+              titulo="Digite uma capital para consultar as informações de seu País"
+              obs="OBS: o nome da capital deve ser em inglês"
+              valor={capital}
+              onChange={setCapital}
+              Pesquisar={buscaPorCapital}
+              Limpar={() => {
+                setCapital('')
+                setExibirListaPorCapital(false);
+              }}/>
+
           </View>
 
           {exibirListaPorPais && (
@@ -135,31 +104,31 @@ export default function App() {
               <View style={styles.listItem}>
                 <Text style={styles.itemTitle}>Nome Comum</Text>
                 <Text style={styles.valor}>
-                  {detalhes.nomeComum || 'Não possui'}
+                  {detalhesPorPais.nomeComum || 'Não possui'}
                 </Text>
               </View>
 
               <View style={styles.listItem}>
                 <Text style={styles.itemTitle}>Nome Oficial</Text>
                 <Text style={styles.valor}>
-                  {detalhes.nomeOficial || 'Não possui'}
+                  {detalhesPorPais.nomeOficial || 'Não possui'}
                 </Text>
               </View>
 
               <View style={styles.listItem}>
                 <Text style={styles.itemTitle}>Nome em Russo</Text>
                 <Text style={styles.valor}>
-                  {detalhes.nomeRusso || 'Não possui'}
+                  {detalhesPorPais.nomeRusso || 'Não possui'}
                 </Text>
               </View>
 
               <View style={styles.listItem}>
-                <Text style={styles.itemTitle}>Foto do País</Text>
+                <Text style={styles.itemTitle}>Ver no mapa</Text>
                 <Text 
-                  style={styles.valor}
+                  style={styles.link}
                   onPress={() =>
-                  {Linking.openURL(detalhes.imagemPais || 'Não possui')}}>
-                    Abrir imagem
+                  {Linking.openURL(detalhesPorPais.imagemPais || 'Não possui')}}>
+                    Abrir mapa do País
                 </Text>
               </View>
 
@@ -180,38 +149,29 @@ export default function App() {
               <View style={styles.listItem}>
                 <Text style={styles.itemTitle}>Nome do País</Text>
                 <Text style={styles.valor}>
-                  {info.nomeComum || 'Não possui'}
+                  {detalhesPorCapital.nomeComum || 'Não possui'}
                 </Text>
               </View>
 
               <View style={styles.listItem}>
                 <Text style={styles.itemTitle}>Bandeira</Text>
-                {info.bandeira && (
+                {detalhesPorCapital.bandeira && (
                   <Image
-                    source={{ uri: info.bandeira }}
-                    style={{ width: 200, height: 120 }}/>
-                )}
+                    style={styles.image}
+                    source={{ uri: detalhesPorCapital.bandeira }}
+                    />)}
               </View>
 
             </View>
+
           </View>
         )}
 
-        </View>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    width: '30%',
-    backgroundColor: 'purple',
-    padding: 8,
-    borderRadius: 4,
-  },
-  buttonTxt: {
-    color: 'white',
-    textAlign: 'center'
-  },
   card: {
     width: '100%',
     backgroundColor: '#f9f9f9',
@@ -228,33 +188,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingVertical: 40,
   },
-  firstGridBotton: {
-    borderBottomColor: 'gray',
-    backgroundColor: '#f9f9f9',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    gap: 20,
-    marginTop: 12   
-  },
-  firstGridTop: {
-    padding: 12,
-    borderWidth: 1,
-    borderBottomColor: 'gray',
-    backgroundColor: '#f9f9f9',
-    marginBottom: 4,
-    borderRadius: 4,
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  input: {
-    width: '70%',
-    borderColor: 'gray',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    padding: 8,
-    textAlign: 'left',
-    borderRadius: 4
+  image: {
+    width: 200,
+    height: 120
   },
   itemList: {
     flexDirection: 'column'
@@ -264,6 +200,11 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
     fontWeight: '600',
+  },
+  link: {
+    fontSize: 17,
+    color: 'purple',
+    fontWeight: 'bold',
   },
   list: {
     width: '90%',
@@ -287,16 +228,9 @@ const styles = StyleSheet.create({
     color: 'purple',
     marginBottom: 4,
   },
-  subtitle: {
-    fontStyle: 'italic',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16
-  },
   topGrid: {
     flexDirection: 'row',
-    gap: 15
+    gap: 15,
   },
   valor: {
     fontSize: 17,
